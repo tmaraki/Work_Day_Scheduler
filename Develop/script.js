@@ -1,17 +1,49 @@
-// Wrap all code that interacts with the DOM in a call to jQuery to ensure that
-// the code isn't run until the browser has finished rendering all the elements
-// in the html.
-var today = dayjs();
-$('#currentDay').text(today.format('MMM D, YYYY'));
+$(function() {
+  var today = dayjs();
+  $('#currentDay').text(today.format('MMM D, YYYY'));
 
-$(document).ready(function() {
   var saveButtons = $(".saveBtn");
-  saveButtons.on("click", function() {
+  saveButtons.on("click", function(event) {
     event.preventDefault();
+    var userInput = $(this).siblings(".userInput").val();
+    localStorage.setItem("saveBtn", userInput);
+    var timeBlockId = $(this).parent().attr("id");
+
+    // retrieving existing data
+    var savedData = localStorage.getItem("timeBlocksData");
+    var timeBlocksData = savedData ? JSON.parse(savedData) : {};
+
+    // updating data object with the user input
+    timeBlocksData[timeBlockId] = userInput;
+
+    // saving updated data object back to local storage
+    localStorage.setItem("timeBlocksData", JSON.stringify(timeBlocksData));
+  });
+
+  const currentHour = dayjs().hour();
+  const timeBlocks = document.querySelectorAll('.time-block');
+  timeBlocks.forEach((timeBlock) => {
+    const blockHour = parseInt(timeBlock.id.split('-')[1]);
+    if (blockHour < currentHour) {
+      timeBlock.classList.add('past');
+    } else if (blockHour === currentHour) {
+      timeBlock.classList.add('present');
+    } else {
+      timeBlock.classList.add('future');
+    }
+
+    // retrieving saved data from local storage
+    var savedData = localStorage.getItem("timeBlocksData");
+    if (savedData) {
+      var timeBlocksData = JSON.parse(savedData);
+      var userInput = timeBlocksData[timeBlock.id];
+      if (userInput) {
+        $(timeBlock).find(".userInput").val(userInput);
+      }
+    }
   });
 });
 
-$(function () {
   // TODO: Add a listener for click events on the save button. This code should
   // use the id in the containing time-block as a key to save the user input in
   // local storage. HINT: What does `this` reference in the click listener
@@ -30,4 +62,3 @@ $(function () {
   // attribute of each time-block be used to do this?
   //
   // TODO: Add code to display the current date in the header of the page.
-});
